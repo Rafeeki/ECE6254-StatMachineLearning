@@ -25,29 +25,54 @@ X = vectorizer.fit_transform(papersH+papersM+papersD).toarray()
 
 # Uncomment this line to see the full list of words remaining after filtering out 
 # stop words and words used less than min_df times
-vectorizer.vocabulary_
+#vectorizer.vocabulary_
 
 # Split word counts into separate matrices
 XH, XM, XD = X[:nH,:], X[nH:nH+nM,:], X[nH+nM:,:]
 
+
+# Initialize vectors for P(word_j | H/M) as total occurence of a word for an other divided by total words 
+fH = np.zeros(len(XH[0]))
+totH = 0
+fM = np.zeros(len(XM[0]))
+totM = 0
+
 # Estimate probability of each word in vocabulary being used by Hamilton
-fH = .6 # refer to lecture #4 pages 11-15
+for i in range(0,len(XH[0])):
+    for j in range(0,len(XH)):
+        fH[i] = float(fH[i])+XH[j][i]
+    totH = totH + fH[i]
+fH = fH/totH
 
 # Estimate probability of each word in vocabulary being used by Madison
-fM = .4 # refer to lecture #4 pages 11-15
+for i in range(0,len(XM[0])):
+    for j in range(0,len(XM)):
+        fM[i] = float(fM[i])+XM[j][i]
+    totM = totM + fM[i]
+fM = fM/totM
 
 # Compute ratio of these probabilities
 fratio = fH/fM
 
 # Compute prior probabilities 
-piH = ???
-piM = ???
+piH = float(nH)/(nH+nM)
+piM = float(nM)/(nH+nM)
 
+Ham_tot = nH
+Mad_tot = nM
 for xd in XD: # Iterate over disputed documents
+    rat = 1
     # Compute likelihood ratio for Naive Bayes model
-    LR = ???
-    if LR>0.5:
+    for j in range(0,len(xd)):
+        rat = rat*(fratio[j])**xd[j]
+        
+    LR = (piH/piM)*rat
+    if LR>1:
         print 'Hamilton'
+        Ham_tot=Ham_tot+1
     else:
         print 'Madison'
+        Mad_tot=Mad_tot+1
+print "Hamilton wrote %d total, and %d of the disputed." % (Ham_tot, Ham_tot-nH)
+print "Madison wrote %d total, and %d of the disputed." % (Mad_tot, Mad_tot-nM)
     
